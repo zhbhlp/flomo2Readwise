@@ -37,20 +37,33 @@ class Readwise:
 	""" Create highlights in Readwise """
 
 	def create_highlights(self, highlights: List[Dict]):
-		res = requests.post(
-			url=self.highlight_create_url,
+		response = requests.post(
+			f"{self.highlight_create_url}",
 			headers=self.headers,
 			json={"highlights": highlights}
 		)
-		if res.status_code != 200:
-			self.logger.log('Failed to create highlights')
-			self.logger.log(f'Error code: {res.status_code}')
-			self.logger.log(f'Error message: {res.text}')
+		
+		if response.status_code != 200:
+			self.logger.log(f"Failed to create highlights")
+			self.logger.log(f"Error code: {response.status_code}")
+			self.logger.log(f"Error message: {response.text}")
 			raise Exception('Failed to create highlights')
 	
 	def create_highlights_from_memos(self, memos: List[Dict]):
-		highlights = self.convert_memos_to_highlights(memos)
-		self.create_highlights(highlights)
+		highlights = []
+		for memo in memos:
+			highlight = {
+				'title': memo.get('title') or 'Flomo Import',  # 如果没有标题就使用默认标题
+				'text': memo.get('content', ''),
+				'source_url': memo.get('url', ''),
+				'source_type': 'flomo'
+			}
+			highlights.append(highlight)
+		
+		if highlights:
+			self.create_highlights(highlights)
+		else:
+			self.logger.log("No highlights to create")
 
 	""" flomo memo -> Readwise highlight """
 
